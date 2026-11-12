@@ -14,14 +14,19 @@ RUN apk add --no-cache git && \
 # Install dependencies using pnpm
 RUN pnpm install --config.engine-strict=false
 
-# ---------------------------------------------------------
-# NEW: Neutralize Umami's pre-build database checks.
-# This allows the Docker container to build completely offline.
-# ---------------------------------------------------------
+# Neutralize Umami's pre-build database checks
 RUN echo "console.log('Skipping env check');" > scripts/check-env.js && \
     echo "console.log('Skipping db check');" > scripts/check-db.js
 
-# Provide the dummy URL so Prisma can generate the database client offline
+# ---------------------------------------------------------
+# NEW: Memory & CPU Constraints for Render's Free Tier
+# Stop Next.js from spawning 47 workers and crashing the RAM
+# ---------------------------------------------------------
+ENV NEXT_PRIVATE_MAX_CPUS=2
+ENV NODE_OPTIONS="--max_old_space_size=2048"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Provide the dummy URL for Prisma
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Build the application
