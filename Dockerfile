@@ -19,11 +19,15 @@ RUN echo "console.log('Skipping env check');" > scripts/check-env.js && \
     echo "console.log('Skipping db check');" > scripts/check-db.js
 
 # ---------------------------------------------------------
-# NEW: Memory & CPU Constraints for Render's Free Tier
-# Stop Next.js from spawning 47 workers and crashing the RAM
+# NEW: 3-Step RAM Crash Prevention
+# 1. Disable Turbopack (Rust compiler that eats RAM)
+# 2. Hard limit Next.js to 2 export workers
+# 3. Restrict Node.js memory to 1.5GB
 # ---------------------------------------------------------
+RUN sed -i 's/next build --turbo/next build/g' package.json
+ENV NEXT_PRIVATE_MAX_WORKERS=2
 ENV NEXT_PRIVATE_MAX_CPUS=2
-ENV NODE_OPTIONS="--max_old_space_size=2048"
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Provide the dummy URL for Prisma
