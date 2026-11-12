@@ -11,8 +11,14 @@ WORKDIR /app
 RUN apk add --no-cache git && \
     git clone --branch v3.5.0 https://github.com/umami-software/umami.git .
 
-# Install dependencies using pnpm, ignoring engine checks just to be safe
+# Install dependencies using pnpm
 RUN pnpm install --config.engine-strict=false
+
+# ---------------------------------------------------------
+# NEW: Provide a dummy database URL to satisfy the build check.
+# Render will override this with your real Supabase URL at runtime!
+# ---------------------------------------------------------
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
 # Build the application
 RUN pnpm build
