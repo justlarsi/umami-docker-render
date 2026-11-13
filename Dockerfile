@@ -54,4 +54,4 @@ COPY --from=builder /app ./
 EXPOSE 3000
 
 # Start the application
-CMD ["pnpm", "start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && pnpm start"]
