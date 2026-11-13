@@ -19,15 +19,18 @@ RUN echo "console.log('Skipping env check');" > scripts/check-env.js && \
     echo "console.log('Skipping db check');" > scripts/check-db.js
 
 # ---------------------------------------------------------
-# NEW: 3-Step RAM Crash Prevention
-# 1. Disable Turbopack (Rust compiler that eats RAM)
-# 2. Hard limit Next.js to 2 export workers
-# 3. Restrict Node.js memory to 1.5GB
+# NEW: The Nuclear Option for RAM Crashes
+# 1. Find ALL package.json files in the monorepo and strip out Turbopack
+# 2. Inject a mock OS script so Next.js thinks the server only has 2 CPU cores
 # ---------------------------------------------------------
-RUN sed -i 's/next build --turbo/next build/g' package.json
+RUN find . -name "package.json" -type f -exec sed -i 's/next build --turbo/next build/g' {} +
+
+# Monkey-patch Node's OS module to return only 2 cores
+RUN echo "const os = require('os'); const orig = os.cpus; os.cpus = () => orig().slice(0, 2);" > /app/mock-os.js
+
+# Force Node to run our mock script before it boots Next.js, and strictly cap memory
+ENV NODE_OPTIONS="--require /app/mock-os.js --max-old-space-size=1536"
 ENV NEXT_PRIVATE_MAX_WORKERS=2
-ENV NEXT_PRIVATE_MAX_CPUS=2
-ENV NODE_OPTIONS="--max-old-space-size=1536"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Provide the dummy URL for Prisma
